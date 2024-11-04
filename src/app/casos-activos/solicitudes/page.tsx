@@ -1,22 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { MapPin, Phone, Calendar, User, HeartHandshake, Users, Truck, Search, Package, MapPinIcon } from 'lucide-react';
+import { useState, useEffect, FC } from 'react';
+import { HeartHandshake } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import SolicitudCard from '@/components/SolicitudCard';
 import Pagination from '@/components/Pagination';
 import OfferHelp from '@/components/OfferHelp';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { HelpRequestData } from '@/types/Requests';
 
-export default function Solicitudes({ towns }) {
-
+type SolicitudesProps = {
+  towns: {
+    id: string;
+    name: string;
+  }[];
+};
+const Solicitudes: FC<SolicitudesProps> = ({ towns }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const [data, setData] = useState([]);
+  const [error, setError] = useState<string>();
+  const [data, setData] = useState<HelpRequestData[]>([]);
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
   const [currentCount, setCurrentCount] = useState(0);
 
@@ -26,11 +31,11 @@ export default function Solicitudes({ towns }) {
     setShowModal(false);
   };
   const itemsPerPage = 10;
-  const numPages = (count) => {
+  const numPages = (count: number) => {
     return Math.ceil(count / itemsPerPage) || 0;
   };
 
-  const updateFilter = (filter, value) => {
+  const updateFilter = (filter: any, value: any) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set(filter, value);
     router.push(`?${params.toString()}`);
@@ -41,7 +46,7 @@ export default function Solicitudes({ towns }) {
     pueblo: searchParams.get('pueblo') || 'todos',
   });
 
-  const changeDataFilter = (type, newFilter) => {
+  const changeDataFilter = (type: any, newFilter: any) => {
     setFiltroData((prev) => ({
       ...prev,
       [type]: newFilter,
@@ -49,16 +54,16 @@ export default function Solicitudes({ towns }) {
     updateFilter(type, newFilter);
   };
 
-  function changePage(newPage) {
+  function changePage(newPage: number) {
     setCurrentPage(newPage);
-    updateFilter("page", newPage);
+    updateFilter('page', newPage);
   }
 
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
-        setError(null);
+        setError(undefined);
 
         // Comenzamos la consulta
         const query = supabase.from('help_requests').select('*', { count: 'exact' }).eq('type', 'necesita');
@@ -83,7 +88,7 @@ export default function Solicitudes({ towns }) {
           setData([]);
         } else {
           setData(data || []);
-          setCurrentCount(count);
+          setCurrentCount(count || 0);
         }
       } catch (err) {
         console.log('Error general:', err);
@@ -156,7 +161,7 @@ export default function Solicitudes({ towns }) {
               className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center gap-2 whitespace-nowrap"
             >
               <HeartHandshake className="w-5 h-5" />
-              Ofrecer ayuda a {filtroData.pueblo === 'todos' ? '' : towns[filtroData.pueblo - 1].name}
+              Ofrecer ayuda a {filtroData.pueblo === 'todos' ? '' : towns[Number(filtroData.pueblo) - 1].name}
             </button>
           </div>
         ) : (
@@ -168,9 +173,11 @@ export default function Solicitudes({ towns }) {
       </div>
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
-          <OfferHelp town={towns[filtroData.pueblo - 1]} onClose={closeModal} isModal={true} />
+          <OfferHelp town={towns[Number(filtroData.pueblo) - 1]} onClose={closeModal} isModal={true} />
         </div>
       )}
     </>
   );
-}
+};
+
+export default Solicitudes;

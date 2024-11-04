@@ -1,12 +1,18 @@
 import { supabase } from '@/lib/supabase';
 import { redirect } from 'next/navigation';
+import { FC, ReactNode } from 'react';
+import { Provider } from '@supabase/auth-js';
 
-export default function SocialButton({ provider, children }) {
-  const providersBg = {
+type SocialButtonProps = {
+  provider: Provider;
+  children: ReactNode;
+};
+const SocialButton: FC<SocialButtonProps> = ({ provider, children }) => {
+  const providersBg: Record<string, string> = {
     google: 'red-500',
   };
 
-  const handleLogin = async (provider) => {
+  const handleLogin = async (provider: Provider) => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
     });
@@ -29,4 +35,6 @@ export default function SocialButton({ provider, children }) {
       {children}
     </button>
   );
-}
+};
+
+export default SocialButton;

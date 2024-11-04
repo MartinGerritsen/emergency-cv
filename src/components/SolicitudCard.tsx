@@ -2,7 +2,14 @@ import { AlertTriangle, Calendar, MapPin, MapPinned, Megaphone, Phone, Users } f
 import { tiposAyudaOptions } from '@/helpers/constants';
 import Link from 'next/link';
 
-export default function SolicitudCard({ caso, towns, isHref }) {
+import { FC } from 'react';
+
+type SolicitudCardProps = {
+  caso: any;
+  towns: any;
+  isHref?: boolean;
+};
+const SolicitudCard: FC<SolicitudCardProps> = ({ caso, towns, isHref = false }) => {
   return (
     <>
       <div
@@ -53,6 +60,19 @@ export default function SolicitudCard({ caso, towns, isHref }) {
               </span>
             </div>
             <div className="flex items-start gap-2">
+              <Megaphone className="h-4 w-4 text-gray-500 flex-shrink-0 mt-1" />
+              <span className="break-words">
+                <span className="font-semibold">Necesita:</span>{' '}
+                {Array.isArray(caso.help_type)
+                  ? caso.help_type
+                      .map((tipo: string) => {
+                        return tiposAyudaOptions[tipo] || tipo;
+                      })
+                      .join(', ')
+                  : 'Ayuda general'}
+              </span>
+            </div>
+            <div className="flex items-start gap-2">
               <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0 mt-1" />
               <span className="break-words">
                 <span className="font-semibold">Fecha:</span>{' '}
@@ -99,21 +119,6 @@ export default function SolicitudCard({ caso, towns, isHref }) {
                 </span>
               </div>
             )}
-            {caso.help_type && (
-              <div className="flex items-start gap-2">
-                <Megaphone className="h-4 w-4 text-gray-500 flex-shrink-0 mt-1" />
-                <span className="break-words">
-                  <span className="font-semibold">Necesita:</span>{' '}
-                  {Array.isArray(caso.help_type)
-                    ? caso.help_type
-                        .map((tipo) => {
-                          return tiposAyudaOptions[tipo] || tipo;
-                        })
-                        .join(', ')
-                    : 'Ayuda general'}
-                </span>
-              </div>
-            )}
             {caso.additional_info?.special_situations && (
               <div className="mt-2 bg-gray-50 p-3 rounded">
                 <span className="font-semibold block mb-1">Situaciones especiales:</span>
@@ -143,4 +148,6 @@ export default function SolicitudCard({ caso, towns, isHref }) {
       </div>
     </>
   );
-}
+};
+
+export default SolicitudCard;

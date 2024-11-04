@@ -1,29 +1,36 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FC } from 'react';
 import { MapPin, Phone, Calendar, User, HeartHandshake, Users, Truck, Search, Package, MapPinIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Pagination from '@/components/Pagination';
 import { tiposAyudaOptions } from '@/helpers/constants';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { HelpRequestData } from '@/types/Requests';
 
-export default function Ofertas({ towns }) {
+type OfertasProps = {
+  towns: {
+    id: string;
+    name: string;
+  }[];
+};
+const Ofertas: FC<OfertasProps> = ({ towns }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
-
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string>();
+  const [showModal, setShowModal] = useState(false);
 
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<HelpRequestData[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentCount, setCurrentCount] = useState(0);
 
   const itemsPerPage = 10;
-  const numPages = (count) => {
+  const numPages = (count: number) => {
     return Math.ceil(count / itemsPerPage) || 0;
   };
 
-  const updateFilter = (filter, value) => {
+  const updateFilter = (filter: any, value: any) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set(filter, value);
     router.push(`?${params.toString()}`);
@@ -31,9 +38,10 @@ export default function Ofertas({ towns }) {
 
   const [filtroData, setFiltroData] = useState({
     ayuda: searchParams.get('acepta') || 'todas',
+    pueblo: 'todos',
   });
 
-  const changeDataFilter = (type, newFilter) => {
+  const changeDataFilter = (type: any, newFilter: any) => {
     setFiltroData((prev) => ({
       ...prev,
       [type]: newFilter,
@@ -41,16 +49,16 @@ export default function Ofertas({ towns }) {
     updateFilter(type, newFilter);
   };
 
-  function changePage(newPage) {
+  function changePage(newPage: number) {
     setCurrentPage(newPage);
-    updateFilter("page", newPage);
+    updateFilter('page', newPage);
   }
 
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
-        setError(null);
+        setError(undefined);
 
         // Comenzamos la consulta
         const query = supabase.from('help_requests').select('*', { count: 'exact' }).eq('type', 'ofrece');
@@ -70,7 +78,7 @@ export default function Ofertas({ towns }) {
           setData([]);
         } else {
           setData(data || []);
-          setCurrentCount(count);
+          setCurrentCount(count!);
         }
       } catch (err) {
         console.log('Error general:', err);
@@ -102,23 +110,23 @@ export default function Ofertas({ towns }) {
   return (
     <>
       {/* FILTROS  */}
-              <div className="flex flex-col sm:flex-row gap-2 items-center justify-between">
-                <p className="font-bold text-md">Filtros</p>
-                <div className="flex flex-col sm:flex-row gap-2 w-full justify-end">
-                  <select
-                    value={filtroData.ayuda}
-                    onChange={(e) => changeDataFilter('ayuda', e.target.value)}
-                    className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 shadow-sm"
-                  >
-                    <option value="todas">Todas las ofertas</option>
-                    {Object.entries(tiposAyudaOptions).map(([key, value]) => (
-                      <option key={key} value={key}>
-                        {value}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+      <div className="flex flex-col sm:flex-row gap-2 items-center justify-between">
+        <p className="font-bold text-md">Filtros</p>
+        <div className="flex flex-col sm:flex-row gap-2 w-full justify-end">
+          <select
+            value={filtroData.ayuda}
+            onChange={(e) => changeDataFilter('ayuda', e.target.value)}
+            className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 shadow-sm"
+          >
+            <option value="todas">Todas las ofertas</option>
+            {Object.entries(tiposAyudaOptions).map(([key, value]) => (
+              <option key={key} value={key}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
       <div className="grid gap-4">
         {data.length === 0 ? (
           <div className="bg-white rounded-lg shadow-lg border border-gray-300 text-center flex justify-center items-center p-10 flex-col gap-5">
@@ -133,7 +141,7 @@ export default function Ofertas({ towns }) {
               className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center gap-2 whitespace-nowrap"
             >
               <HeartHandshake className="w-5 h-5" />
-              Ofrecer ayuda a {filtroData.pueblo === 'todos' ? '' : towns[filtroData.pueblo - 1].name}
+              Ofrecer ayuda a {filtroData.pueblo === 'todos' ? '' : towns[Number(filtroData.pueblo) - 1].name}
             </button>
           </div>
         ) : (
@@ -156,7 +164,7 @@ export default function Ofertas({ towns }) {
                       Ofrece:{' '}
                       {Array.isArray(caso.help_type)
                         ? caso.help_type
-                            .map((tipo) => {
+                            .map((tipo: string) => {
                               return tiposAyudaOptions[tipo] || tipo;
                             })
                             .join(', ')
@@ -180,9 +188,7 @@ export default function Ofertas({ towns }) {
                     <Phone className="h-4 w-4 text-gray-500 flex-shrink-0 mt-1" />
                     <span className="break-words">
                       <span className="font-semibold">Teléfono:</span>{' '}
-                      {typeof caso.contact_info === 'string'
-                        ? caso.contact_info
-                        : JSON.parse(caso.contact_info).phone}
+                      {typeof caso.contact_info === 'string' ? caso.contact_info : JSON.parse(caso.contact_info).phone}
                     </span>
                   </div>
                 )}
@@ -192,8 +198,7 @@ export default function Ofertas({ towns }) {
                     {(() => {
                       let resources;
                       try {
-                        resources =
-                          typeof caso.resources === 'string' ? JSON.parse(caso.resources) : caso.resources;
+                        resources = typeof caso.resources === 'string' ? JSON.parse(caso.resources) : caso.resources;
 
                         return resources.vehicle ? (
                           <div className="flex items-start gap-2">
@@ -245,4 +250,6 @@ export default function Ofertas({ towns }) {
       </div>
     </>
   );
-}
+};
+
+export default Ofertas;
